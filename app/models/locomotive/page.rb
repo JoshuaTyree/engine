@@ -2,6 +2,7 @@ module Locomotive
   class Page
 
     include Locomotive::Mongoid::Document
+    include AlgoliaSearch
 
     MINIMAL_ATTRIBUTES = %w(_id title slug fullpath position depth published templatized target_klass_name redirect listed response_type parent_id parent_ids site_id created_at updated_at raw_template is_layout)
 
@@ -29,6 +30,7 @@ module Locomotive
     field :cache_enabled,       type: Boolean, default: true
     field :response_type,       default: 'text/html'
     field :display_settings,    type: Hash
+    field :searchable,          type: Boolean, default: true
 
     ## indexes ##
     index parent_id: 1
@@ -111,6 +113,63 @@ module Locomotive
     def touch_site_attribute
       self.raw_template_changed? ? :template_version : :content_version
     end
+
+    # Full-text Search Implementation
+    algoliasearch do
+      attribute :title, :searchable_content
+    end
+
+    def searchable_content
+
+      [].tap do |content|
+        # # 1. add the editable elements
+        self.editable_elements.each do |element|
+          # we don't want to include fixed editable elements of children.
+          next if !element.is_a?(Locomotive::EditableText) || (element.fixed? && element.from_parent?)
+          content << element.content
+        end
+
+        # add the raw template by rendering it (will render the editable elements)
+
+        # get a simple version of the template. not need to apply the "layout"
+        # for instance. then, render this template
+        template = self.raw_template.gsub(/\{\%\s*extends [^%]*\s*\%\}/, '')
+
+        # modify the context instance so that the exceptions which might raise
+        # won't be displayed in the rendered output.
+        context = ::Liquid::Context.new({}, {}, { site: site, page: self }, false)
+
+        context.instance_eval do
+          def handle_error(e, x); '' end
+        end
+
+        # render the page
+        begin
+          document = ::Liquid::Template.parse(template, { site: site, page: self })
+
+          # remove all the editable_(file|text|control) elements
+          remove_editable_elements_from_searchable_template(document.root)
+
+          content << document.render(context)
+        rescue Exception => e
+          Rails.logger.error "Unable to index #{self.fullpath}[#{self._id}], error = #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
+        end
+      end.join("\n")
+    end
+
+    def remove_editable_elements_from_searchable_template(node)
+      if node.respond_to?(:nodelist)
+        (node.nodelist || []).each do |child|
+          if child.is_a?(Locomotive::Steam::Liquid::Tags::Editable::Base)
+            node.nodelist.delete(child)
+          else
+            self.remove_editable_elements_from_searchable_template(child)
+          end
+        end
+      end
+    end
+
 
     protected
 

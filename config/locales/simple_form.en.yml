@@ -80,6 +80,7 @@ en:
         page:
           handle: "Unique identifier to retrieve this page within an external controller instance"
           published: "Only authenticated accounts can view unpublished pages."
+          searchable: "Only searchable pages can be listed in search results."
           templatized: "Use the page as a template for a model you defined."
           cache_enabled: "When enabled, your page will be cached as long as the content doesn't change."
           listed: "Control whether to show the page from generated menus."
@@ -163,4 +164,3 @@ en:
           delete: Delete this site
         page:
           delete: Delete
-

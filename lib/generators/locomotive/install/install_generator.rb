@@ -16,6 +16,8 @@ module Locomotive
 
       template 'dragonfly.rb', 'config/initializers/dragonfly.rb'
 
+      template 'algolia.rb', 'config/initializers/algolia.rb'
+
       template 'mongoid.yml', 'config/mongoid.yml'
     end
 

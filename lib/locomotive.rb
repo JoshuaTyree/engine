@@ -15,6 +15,7 @@ require 'locomotive/action_controller'
 require 'locomotive/rails'
 require 'locomotive/regexps'
 
+
 module Locomotive
   extend ActiveSupport::Autoload
 
@@ -73,3 +74,5 @@ module Locomotive
   end
 
 end
+
+Locomotive::AlgoliaSearch = AlgoliaSearch

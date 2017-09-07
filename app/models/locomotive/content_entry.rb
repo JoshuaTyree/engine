@@ -1,7 +1,7 @@
 module Locomotive
   class ContentEntry
-
     include Locomotive::Mongoid::Document
+    include AlgoliaSearch
 
     ## extensions ##
     include ::CustomFields::Target
@@ -80,6 +80,18 @@ module Locomotive
     def content_type_slug
       self.content_type.try(:slug)
     end
+
+    # Full-text search Implementation
+    # TODO: Figure out how to use the custom_fields for algoliasearch instead of a blanket array
+
+    algoliasearch do
+      attribute :searchable_content
+    end
+
+    def searchable_content
+      content_type.entries_custom_fields.where(searchable: true).map{|field| send(field.name) }
+    end
+
 
     def as_json(*args)
       super.tap { |json| json['_label'] = _label }

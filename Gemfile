@@ -17,6 +17,9 @@ group :test, :development do
 end
 
 group :development do
+  gem 'activesearch', '~> 0.3.2', path: '../activesearch'
+  # gem 'activesearch', '~> 0.3.3'
+
   gem 'custom_fields', path: '../custom_fields'
   # gem 'custom_fields', github: 'locomotivecms/custom_fields', ref: '27f1d62'
 

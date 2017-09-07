@@ -104,6 +104,10 @@ module Locomotive
       (self.display_settings || {})['hidden']
     end
 
+    def searchable?
+      entries_custom_fields.where(searchable: true).any?
+    end
+
     def touch_site_attribute
       :content_version
     end
